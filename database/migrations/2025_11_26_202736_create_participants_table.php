@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('clients', function (Blueprint $table) {
+        Schema::create('participants', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('cc')->unique();
+            $table->string('canary_subject_id')->unique()->nullable();
             $table->timestamps();
         });
     }
@@ -23,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('clients');
+        Schema::dropIfExists('participants');
     }
 };

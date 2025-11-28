@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Record extends Model
 {
-    protected $fillable = ['client_id', 'filename', 'duration'];
+    protected $fillable = ['participant_id', 'canary_assessment_id', 'duration'];
     //
-    public function client()
+    public function participant()
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Participant::class);
     }
 }

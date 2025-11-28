@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('records', function (Blueprint $table) {
             $table->id();
-            $table->foreignUuid('client_id')->constrained()->cascadeOnDelete();
-            $table->string('filename')->nullable();
+            $table->foreignUuid('participant_id')->constrained()->cascadeOnDelete();
+            $table->string('canary_assessment_id')->nullable()->unique();
             $table->integer('duration')->nullable();
             $table->timestamps();
         });
