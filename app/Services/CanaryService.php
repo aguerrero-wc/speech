@@ -38,7 +38,7 @@ class CanaryService
     }
 
     /**
-     * PASO 2: Crear el sujeto usando el Token
+     *Crear el sujeto usando el Token
      */
     public function createTestSubject()
     {
@@ -65,6 +65,50 @@ class CanaryService
         return [
             'status' => 'success',
             'code' => 201,
+            'data' => $response->json()
+        ];
+    }
+
+    public function createSubject(string $externalId, string $name)
+    {
+        $token = $this->getAccessToken();
+        $url = "{$this->baseUrl}/v3/api/create-subject";
+
+        $body = [
+            'projectId' => $this->projectId,
+            'externalId' => $externalId,// ID participant
+            'name' => $name
+        ];
+
+        $response = Http::withToken($token)->post($url, $body);
+
+        if ($response->failed()) {
+            // Lanzamos excepción para manejarla en el controller
+            throw new Exception("Canary Error: " . $response->body());
+        }
+
+        // Retornamos solo el ID, que es lo que nos importa
+        return $response->json('id');
+    }
+
+    public function getSubjects()
+    {
+        $token = $this->getAccessToken();
+        $url = "{$this->baseUrl}/v3/api/subjects";
+
+        $response = Http::withToken($token)->get($url);
+
+        if ($response->failed()) {
+            return [
+                'status' => 'error',
+                'code' => $response->status(),
+                'message' => $response->json()
+            ];
+        }
+
+        return [
+            'status' => 'success',
+            'code' => 200,
             'data' => $response->json()
         ];
     }

@@ -16,38 +16,43 @@ class ParticipantAuthController extends Controller
         $this->canaryService = $canaryService;
     }
 
-    public function loginParticipant(Request $request)
+    public function createParticipant(Request $request)
     {
         $request->validate([
             'cc' => 'required|string',
+            'name' => 'required|string',
         ]);
 
         $participant = Participant::firstOrCreate(
             ['cc' => $request->cc],
-            ['name' => 'Participantetest ' . $request->cc]
+            ['name' => $request->name]
         );
 
-        // 3. Sincronización con Canary (Lazy Sync)
-        // Si el participante no tiene ID de Canary guardado, lo creamos ahora
         if (empty($participant->canary_subject_id)) {
             try {
                 $canaryId = $this->canaryService->createSubject(
-                    $participant->cc,
-                    $participant->name ?? ('Participante ' . $participant->cc)
-                );
-
-                // Guardamos el ID de Canary en tu DB
-                $participant->update(['canary_subject_id' => $canaryId]);
-
-            } catch (\Exception $e) {
-                \Log::error("Error creando sujeto en Canary: " . $e->getMessage());
-                return back()->withErrors(['msg' => 'Error de conexión con servicio de voz.']);
-            }
+                $participant->cc,
+                $participant->name
+            );
+            dd($canaryId);
+            // $participant->update(['canary_subject_id' => $canaryId]);
+        } catch (\Exception $e) {
+            \Log::error("Error creando sujeto en Canary: " . $e->getMessage());
+            return response()->json([
+                'status' => 'Error de conexión con servicio de voz.',
+                'message' => $e->getMessage()
+            ], 500);
         }
+    }
 
-        Auth::guard('participant')->login($participant);
-        $request->session()->regenerate();
+    // CAMBIO: Usa token en lugar de sesión para API
+    $token = $participant->createToken('api-token')->plainTextToken;
 
-        return redirect()->intended('/records/grabacion');
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Participante creado Canary',
+        'token' => $token, // Devuelve el token
+        'participant' => $participant,
+    ]);
     }
 }
