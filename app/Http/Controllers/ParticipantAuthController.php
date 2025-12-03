@@ -23,36 +23,32 @@ class ParticipantAuthController extends Controller
             'name' => 'required|string',
         ]);
 
-        $participant = Participant::firstOrCreate(
-            ['cc' => $request->cc],
-            ['name' => $request->name]
-        );
-
-        if (empty($participant->canary_subject_id)) {
-            try {
-                $canaryId = $this->canaryService->createSubject(
-                $participant->cc,
-                $participant->name
+        try {
+            $canaryId = $this->canaryService->createSubject(
+                $request->cc,
+                $request->name
             );
-            dd($canaryId);
-            // $participant->update(['canary_subject_id' => $canaryId]);
-        } catch (\Exception $e) {
-            \Log::error("Error creando sujeto en Canary: " . $e->getMessage());
+
+            $participant = Participant::updateOrCreate(
+                ['cc' => $request->cc],
+                [
+                    'name' => $request->name,
+                    'canary_subject_id' => $canaryId
+                ]
+            );
+        } catch (\Throwable $th) {
+            \Log::error("Subject creation error: " . $th->getMessage());
             return response()->json([
-                'status' => 'Error de conexión con servicio de voz.',
-                'message' => $e->getMessage()
+                'status' => 'Error.',
+                'message' => $th->getMessage()
             ], 500);
         }
-    }
-
-    // CAMBIO: Usa token en lugar de sesión para API
-    $token = $participant->createToken('api-token')->plainTextToken;
 
     return response()->json([
         'status' => 'success',
-        'message' => 'Participante creado Canary',
-        'token' => $token, // Devuelve el token
+        'message' => 'Subject created successfully.',
         'participant' => $participant,
+        'canary_subject_id' => $canaryId
     ]);
     }
 }

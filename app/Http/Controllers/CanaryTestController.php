@@ -15,22 +15,10 @@ class CanaryTestController extends Controller
         $this->canaryService = $canaryService;
     }
 
-    public function ping(Request $request): JsonResponse
+    public function getSubject(string $externalId): JsonResponse
     {
         try {
-            $result = $this->canaryService->createSubject($request->cc, $request->name);
-            return response()->json($result);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'critical_error',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-    public function getSubjects(Request $request): JsonResponse
-    {
-        try {
-            $result = $this->canaryService->getSubjects();
+            $result = $this->canaryService->getSubject($externalId);
             return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([

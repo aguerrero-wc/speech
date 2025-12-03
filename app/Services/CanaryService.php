@@ -76,7 +76,7 @@ class CanaryService
 
         $body = [
             'projectId' => $this->projectId,
-            'externalId' => $externalId,// ID participant
+            'externalId' => $externalId,// Identificador en Cannay speech del participante
             'name' => $name
         ];
 
@@ -86,17 +86,18 @@ class CanaryService
             // Lanzamos excepción para manejarla en el controller
             throw new Exception("Canary Error: " . $response->body());
         }
-
         // Retornamos solo el ID, que es lo que nos importa
         return $response->json('id');
     }
 
-    public function getSubjects()
+    public function getSubject(string $externalId)
     {
         $token = $this->getAccessToken();
-        $url = "{$this->baseUrl}/v3/api/subjects";
+        $url = "{$this->baseUrl}/v3/api/subject";
 
-        $response = Http::withToken($token)->get($url);
+        $response = Http::withToken($token)->get($url, [
+            'id' => $externalId
+        ]);
 
         if ($response->failed()) {
             return [
