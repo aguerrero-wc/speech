@@ -16,6 +16,43 @@ class CanaryService
         $this->baseUrl = env('BASE_URL_CANARY');
         $this->apiKey = env('API_KEY_CANARY');
         $this->projectId = env('PROJECT_ID');
+        $this->surveyCode = env('CANARY_SURVEY_CODE');
+    }
+
+
+public function uploadAudioToCanary(string $preSignedUrl, string $audioFilePath)
+    {
+        $audioContent = file_get_contents($audioFilePath);
+        
+        $ch = curl_init($preSignedUrl);
+        
+        curl_setopt_array($ch, [
+            CURLOPT_CUSTOMREQUEST => 'PUT',
+            CURLOPT_POSTFIELDS => $audioContent,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: audio/wav', // 🔥 Especificar WAV
+                'Content-Length: ' . strlen($audioContent),
+            ],
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_SSL_VERIFYPEER => true,
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
+        curl_close($ch);
+        
+        \Log::info('Upload result', [
+            'http_code' => $httpCode,
+            'file_size' => strlen($audioContent)
+        ]);
+        
+        if ($httpCode !== 200 && $httpCode !== 201 && $httpCode !== 204) {
+            throw new Exception("Upload Audio Error: HTTP {$httpCode} - {$response}");
+        }
+        
+        return true;
     }
 
     /**
@@ -112,5 +149,82 @@ class CanaryService
             'code' => 200,
             'data' => $response->json()
         ];
+    }
+
+    public function listProjectSurveys()
+    {
+        $token = $this->getAccessToken();
+        $url = "{$this->baseUrl}/v3/reseller/project";
+
+        $response = Http::withToken($token)->get($url, [
+            'id' => $this->projectId
+        ]);
+
+        if ($response->failed()) {
+            throw new Exception("Get Project Error: " . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    //assessment -> grabaciones 
+    public function beginAssessment(string $canarySubjectId)
+    {
+        $token = $this->getAccessToken();
+        $url = "{$this->baseUrl}/v3/api/assessment/begin";
+
+        $body = [
+            'subjectId' => $canarySubjectId,
+            'surveyCode' => 'KALM_WELLNESS' ,
+            'generateUploadUrls' => true,
+            // 'metadata' => [
+            //     'source' => 'web-app',
+            //     'timestamp' => now()->toIso8601String()
+            // ]
+        ];
+
+        $response = Http::withToken($token)->post($url, $body);
+
+        if ($response->failed()) {
+            throw new Exception("Begin Assessment Error: " . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    public function endAssessment(string $assessmentId, array $responseData)
+    {
+        $token = $this->getAccessToken();
+        $url = "{$this->baseUrl}/v3/api/assessment/end";
+
+        $body = [
+            'assessmentId' => $assessmentId,
+            'responseData' => $responseData
+        ];
+
+        $response = Http::withToken($token)->post($url, $body);
+
+        if ($response->failed()) {
+            throw new Exception("End Assessment Error: " . $response->body());
+        }
+
+        return $response->json();
+    }
+
+
+    public function getAssessmentScores(string $assessmentId)
+    {
+        $token = $this->getAccessToken();
+        $url = "{$this->baseUrl}/v3/api/assessment";
+
+        $response = Http::withToken($token)->get($url, [
+            'id' => $assessmentId
+        ]);
+
+        if ($response->failed()) {
+            throw new Exception("Get Assessment Error: " . $response->body());
+        }
+
+        return $response->json();
     }
 }

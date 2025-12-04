@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignUuid('participant_id')->constrained()->cascadeOnDelete();
             $table->string('canary_assessment_id')->nullable()->unique();
-            $table->integer('duration')->nullable();
+            
             $table->timestamps();
         });
     }

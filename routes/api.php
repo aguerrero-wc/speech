@@ -15,5 +15,12 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+
+Route::post('/test/process-audio/{participant_id}', [CanaryTestController::class, 'processAudio']);
+Route::get('/test/assessment/{assessmentId}/results', [CanaryTestController::class, 'getAssessmentResults']);
+
+Route::get('/survey', [CanaryTestController::class, 'listProjectSurveys']);
+
 Route::get('/canary/subjects/{externalId}', [CanaryTestController::class, 'getSubject']);
 Route::post('/participant/create', [ParticipantAuthController::class, 'createParticipant']);
+Route::post('/participants/{participantId}/assessment/begin', [CanaryTestController::class, 'beginAssessment']);
