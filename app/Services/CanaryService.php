@@ -215,14 +215,15 @@ public function uploadAudioToCanary(string $preSignedUrl, string $audioFilePath)
     public function getAssessmentScores(string $assessmentId)
     {
         $token = $this->getAccessToken();
-        $url = "{$this->baseUrl}/v3/api/assessment";
+        $url = "{$this->baseUrl}/v3/api/list-scores";
 
         $response = Http::withToken($token)->get($url, [
-            'id' => $assessmentId
+            'assessmentId' => $assessmentId,
+            'includeErrors' => 'true'
         ]);
 
         if ($response->failed()) {
-            throw new Exception("Get Assessment Error: " . $response->body());
+            throw new Exception("Get Scores Error: " . $response->body());
         }
 
         return $response->json();
